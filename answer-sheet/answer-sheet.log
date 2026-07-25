@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.22.0 (TeX Live 2025/Debian)  (format=lualatex 2026.6.23)  25 JUL 2026 13:03
+This is LuaHBTeX, Version 1.22.0 (TeX Live 2025/Debian)  (format=lualatex 2026.6.23)  25 JUL 2026 16:15
  system commands enabled.
 **answer-sheet.tex
 (./answer-sheet.tex
@@ -513,7 +513,7 @@ Here is how much of LuaTeX's memory you used:
 </usr/share/texmf/fonts/opentype/public/lm/lmroman5-regular.otf></usr/share/texm
 f/fonts/opentype/public/lm/lmroman6-regular.otf></usr/share/texmf/fonts/opentype
 /public/lm/lmroman10-regular.otf>
-Output written on answer-sheet.pdf (1 page, 81119 bytes).
+Output written on answer-sheet.pdf (1 page, 81114 bytes).
 
 PDF statistics: 32 PDF objects out of 1000 (max. 8388607)
  19 compressed objects within 1 object stream

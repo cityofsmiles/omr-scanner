@@ -270,7 +270,7 @@ captureBtn.addEventListener('click', () => {
   const gray = new cv.Mat();
   cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
   const blurred = new cv.Mat();
-  cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+  cv.GaussianBlur(gray, blurred, new cv.Size(3, 3), 0);
   const thresh = new cv.Mat();
   cv.threshold(blurred, thresh, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
 
@@ -286,16 +286,26 @@ captureBtn.addEventListener('click', () => {
     if (area > frameArea * 0.0005 && area < frameArea * 0.02) {
       const rect = cv.boundingRect(c);
       const aspect = rect.width / rect.height;
-      // extent = contour area / bounding-box area. A solid filled square has
-      // extent close to 1.0. A circle (like an answer bubble) traced as a
-      // contour has extent close to pi/4 (~0.785), since the circle doesn't
-      // fill the corners of its own bounding box. This lets us reject bubbles
-      // that would otherwise pass the area/aspect checks and get mistaken for
-      // corner markers, which silently corrupts the whole perspective warp.
-      const boxArea = rect.width * rect.height;
-      const extent = boxArea > 0 ? area / boxArea : 0;
-      if (aspect > 0.7 && aspect < 1.3 && extent > 0.85) {
-        candidates.push({ cx: rect.x + rect.width / 2, cy: rect.y + rect.height / 2, area, extent });
+      if (aspect > 0.7 && aspect < 1.3) {
+        // Distinguish solid square markers from circular bubbles by counting
+        // polygon corners after approximation, rather than by fill-ratio
+        // (extent). Extent is unreliable at small marker sizes because blur
+        // and print/camera anti-aliasing round off square corners enough to
+        // make a photographed square measure almost as "round" as a circle.
+        // Corner count survives that rounding much better: a square
+        // approximates to ~4-6 vertices, a circle to 7+.
+        const peri = cv.arcLength(c, true);
+        const approx = new cv.Mat();
+        cv.approxPolyDP(c, approx, 0.04 * peri, true);
+        const corners = approx.rows;
+        approx.delete();
+        const boxArea = rect.width * rect.height;
+        const extent = boxArea > 0 ? area / boxArea : 0;
+        // corners: accept near-square shapes (4-6 vertices after approximation)
+        // extent: loose secondary check (0.7, not 0.85) to filter out thin/noisy shapes
+        if (corners >= 4 && corners <= 6 && extent > 0.7) {
+          candidates.push({ cx: rect.x + rect.width / 2, cy: rect.y + rect.height / 2, area, corners, extent });
+        }
       }
     }
     c.delete();
