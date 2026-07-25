@@ -120,9 +120,14 @@
       <canvas id="liveCanvas"></canvas>
     </div>
     <button id="autoScanBtn" disabled>Start Auto-Scan</button>
-    <button id="captureBtn" disabled class="secondary">Manual Capture</button>
-    <button id="retakeBtn" class="secondary" disabled>Retake</button>
     <p id="autoScanStatus">Auto-Scan off — calibrate manually first, then start Auto-Scan for hands-free batch scanning.</p>
+    <details style="margin-top:8px;">
+      <summary style="cursor:pointer; font-size:0.85rem; color:#8b949e;">Advanced (manual capture / troubleshooting)</summary>
+      <div style="margin-top:8px;">
+        <button id="captureBtn" disabled class="secondary">Manual Capture</button>
+        <button id="retakeBtn" class="secondary" disabled>Retake</button>
+      </div>
+    </details>
   </div>
 
   <div class="panel">
@@ -134,31 +139,39 @@
   </div>
 
   <div class="panel" style="min-width:260px;">
-    <strong style="font-size:0.9rem;">Bubble grid calibration</strong>
+    <strong style="font-size:0.9rem;">Answer sheet</strong>
     <div class="grid2">
       <div><label for="numQ">Questions</label><input type="number" id="numQ" value="50" min="1"></div>
-      <div><label for="numC">Choices (A,B,C...)</label><input type="number" id="numC" value="4" min="2" max="10"></div>
-      <div><label for="startX">Start X (px)</label><input type="number" id="startX" value="35" min="0"></div>
-      <div><label for="startY">Start Y (px)</label><input type="number" id="startY" value="115" min="0"></div>
-      <div><label for="stepY">Row spacing Y</label><input type="number" id="stepY" value="16" min="1"></div>
-      <div><label for="stepX">Choice spacing X</label><input type="number" id="stepX" value="20" min="1"></div>
-      <div><label for="radius">Bubble radius</label><input type="number" id="radius" value="5.5" min="1" step="0.5"></div>
-      <div><label for="thresh">Fill threshold %</label><input type="number" id="thresh" value="35" min="0" max="100"></div>
-      <div><label for="rowsPerCol">Rows per column</label><input type="number" id="rowsPerCol" value="25" min="1"></div>
-      <div><label for="colOffset">Column X offset (px)</label><input type="number" id="colOffset" value="180"></div>
     </div>
-    <button id="overlayBtn" class="secondary">Redraw Grid Overlay</button>
-    <p class="sub" style="margin-top:10px;">Adjust values until overlay circles fit each bubble, then hit Detect Answers.</p>
+    <details style="margin-top:10px;">
+      <summary style="cursor:pointer; font-size:0.85rem; color:#8b949e;">Advanced calibration (only if you change the template)</summary>
+      <div class="grid2" style="margin-top:8px;">
+        <div><label for="numC">Choices (A,B,C...)</label><input type="number" id="numC" value="4" min="2" max="10"></div>
+        <div><label for="startX">Start X (px)</label><input type="number" id="startX" value="35" min="0"></div>
+        <div><label for="startY">Start Y (px)</label><input type="number" id="startY" value="115" min="0"></div>
+        <div><label for="stepY">Row spacing Y</label><input type="number" id="stepY" value="16" min="1"></div>
+        <div><label for="stepX">Choice spacing X</label><input type="number" id="stepX" value="20" min="1"></div>
+        <div><label for="radius">Bubble radius</label><input type="number" id="radius" value="5.5" min="1" step="0.5"></div>
+        <div><label for="thresh">Fill threshold %</label><input type="number" id="thresh" value="35" min="0" max="100"></div>
+        <div><label for="rowsPerCol">Rows per column</label><input type="number" id="rowsPerCol" value="25" min="1"></div>
+        <div><label for="colOffset">Column X offset (px)</label><input type="number" id="colOffset" value="180"></div>
+      </div>
+      <button id="overlayBtn" class="secondary">Redraw Grid Overlay</button>
+      <p class="sub" style="margin-top:10px;">Adjust values until overlay circles fit each bubble, then hit Detect Answers.</p>
+    </details>
   </div>
 
   <div class="panel" style="min-width:260px;">
     <strong style="font-size:0.9rem;">Answer key</strong>
-    <p class="sub" style="margin:6px 0;">Type it, or scan a filled-in key sheet and save the detection as the key.</p>
+    <p class="sub" style="margin:6px 0;">Type the correct answers, one letter per question.</p>
     <textarea id="keyInput" rows="3" placeholder="e.g. ABCDAABCDABCDAABCDABCDAAB..."
       style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; border-radius:4px; padding:6px; font-size:0.85rem; font-family:monospace;"></textarea>
     <button id="applyKeyBtn" class="secondary">Apply Typed Key</button>
-    <button id="saveDetectionAsKeyBtn" class="secondary" disabled>Save Last Detection as Key</button>
     <p id="keyStatus" class="sub" style="margin-top:8px;">Key: not set</p>
+    <details style="margin-top:4px;">
+      <summary style="cursor:pointer; font-size:0.85rem; color:#8b949e;">Advanced (scan a filled key sheet instead)</summary>
+      <button id="saveDetectionAsKeyBtn" class="secondary" style="margin-top:8px;" disabled>Save Last Detection as Key</button>
+    </details>
   </div>
 
 </div>
