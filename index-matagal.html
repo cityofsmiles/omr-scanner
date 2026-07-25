@@ -78,20 +78,6 @@
   th { color: #8b949e; font-weight: 600; }
   .flag { color: #f0883e; }
   .ok { color: #3fb950; }
-  #autoScanStatus {
-    margin-top: 8px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    background: #21262d;
-    font-size: 0.85rem;
-    border: 1px solid #30363d;
-  }
-  .container.flash-success { animation: flashGreen 0.5s ease; }
-  @keyframes flashGreen {
-    0% { box-shadow: 0 0 0 4px #3fb950; }
-    100% { box-shadow: 0 0 0 0 transparent; }
-  }
-  button.active { background: #1f6feb; }
 </style>
 </head>
 <body>
@@ -106,14 +92,12 @@
 <div class="row">
 
   <div class="panel">
-    <div class="container" id="cameraContainer">
+    <div class="container">
       <video id="webcam" playsinline></video>
       <canvas id="liveCanvas"></canvas>
     </div>
-    <button id="autoScanBtn" disabled>Start Auto-Scan</button>
-    <button id="captureBtn" disabled class="secondary">Manual Capture</button>
+    <button id="captureBtn" disabled>Capture</button>
     <button id="retakeBtn" class="secondary" disabled>Retake</button>
-    <p id="autoScanStatus">Auto-Scan off — calibrate manually first, then start Auto-Scan for hands-free batch scanning.</p>
   </div>
 
   <div class="panel">
@@ -198,9 +182,6 @@ const exportBatchBtn = document.getElementById('exportBatchBtn');
 const removeLastBtn = document.getElementById('removeLastBtn');
 const clearBatchBtn = document.getElementById('clearBatchBtn');
 const batchStatus = document.getElementById('batchStatus');
-const autoScanBtn = document.getElementById('autoScanBtn');
-const autoScanStatus = document.getElementById('autoScanStatus');
-const cameraContainer = document.getElementById('cameraContainer');
 
 // Target dimensions match ONE cut-out mini-sheet (4.135in x 5.845in @ 100dpi),
 // since each mini-sheet is cut apart and scanned individually. This must match
@@ -217,16 +198,6 @@ let cvReady = false;
 let lastResults = [];
 let answerKey = []; 
 let batch = []; 
-
-// Auto-scan state
-let autoScanActive = false;
-let autoScanArmed = true;       // true = ready to capture the next sheet
-let stableCount = 0;
-let lastCentroids = null;
-let autoScanIntervalId = null;
-const STABLE_TICKS_REQUIRED = 3;   // consecutive steady checks before capturing (~600ms hold)
-const CHECK_INTERVAL_MS = 200;     // how often to check for a sheet, independent of the display's rAF rate
-const STABILITY_TOLERANCE_PX = 6;  // max marker movement (raw camera px) between checks to count as "steady"
 
 function onOpenCvReady() {
   cv['onRuntimeInitialized'] = () => {
@@ -262,26 +233,17 @@ async function startCamera() {
     if (liveMat) liveMat.delete();
     liveMat = new cv.Mat(video.height, video.width, cv.CV_8UC4);
 
-    statusText.innerText = 'Live — calibrate manually first, then start Auto-Scan.';
+    statusText.innerText = 'Live — align sheet, then Capture.';
     captureBtn.disabled = false;
-    autoScanBtn.disabled = false;
-    resumeLiveLoop();
+    loopLive();
   }, { once: true });
 }
 
-// The display loop (rAF) is paused/resumed rather than the camera stream being
-// stopped/restarted on every capture — getUserMedia renegotiation has real
-// latency (300ms-1s+ on many phones), which was the main source of slowness
-// between sheets. The camera hardware stays on continuously; only the loop
-// that copies frames to the canvas pauses while reviewing a captured sheet.
-let liveLoopActive = false;
-
-function resumeLiveLoop() {
-  if (liveLoopActive) return;
-  liveLoopActive = true;
+function loopLive() {
+  if (!stream) return;
   const cap = new cv.VideoCapture(video);
   function tick() {
-    if (!liveLoopActive) return;
+    if (!stream) return;
     cap.read(liveMat);
     cv.imshow('liveCanvas', liveMat);
     rafId = requestAnimationFrame(tick);
@@ -289,14 +251,8 @@ function resumeLiveLoop() {
   tick();
 }
 
-function pauseLiveLoop() {
-  liveLoopActive = false;
-  if (rafId) cancelAnimationFrame(rafId);
-}
-
 function stopCamera() {
-  pauseLiveLoop();
-  if (autoScanIntervalId) clearInterval(autoScanIntervalId);
+  if (rafId) cancelAnimationFrame(rafId);
   if (stream) {
     stream.getTracks().forEach(t => t.stop());
     stream = null;
@@ -305,12 +261,12 @@ function stopCamera() {
 
 window.addEventListener('beforeunload', stopCamera);
 
-// ---- Marker detection (shared by manual capture and auto-scan) ----
+// ---- Capture + marker-based perspective correction ----
 
-// Finds the 4 corner fiducial markers in a frame. Returns {topLeft, topRight,
-// bottomLeft, bottomRight} (each {cx, cy} in the frame's own pixel space) or
-// null if fewer than 4 were found. Does not delete `frame` — caller owns it.
-function detectMarkers(frame) {
+captureBtn.addEventListener('click', () => {
+  if (!cvReady || !liveMat) return;
+
+  const frame = liveMat.clone();
   const gray = new cv.Mat();
   cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
   const blurred = new cv.Mat();
@@ -336,6 +292,8 @@ function detectMarkers(frame) {
         // (extent). Extent is unreliable at small marker sizes because blur
         // and print/camera anti-aliasing round off square corners enough to
         // make a photographed square measure almost as "round" as a circle.
+        // Corner count survives that rounding much better: a square
+        // approximates to ~4-6 vertices, a circle to 7+.
         const peri = cv.arcLength(c, true);
         const approx = new cv.Mat();
         cv.approxPolyDP(c, approx, 0.04 * peri, true);
@@ -343,6 +301,8 @@ function detectMarkers(frame) {
         approx.delete();
         const boxArea = rect.width * rect.height;
         const extent = boxArea > 0 ? area / boxArea : 0;
+        // corners: accept near-square shapes (4-6 vertices after approximation)
+        // extent: loose secondary check (0.7, not 0.85) to filter out thin/noisy shapes
         if (corners >= 4 && corners <= 6 && extent > 0.7) {
           candidates.push({ cx: rect.x + rect.width / 2, cy: rect.y + rect.height / 2, area, corners, extent });
         }
@@ -352,7 +312,11 @@ function detectMarkers(frame) {
   }
   contours.delete(); hierarchy.delete(); thresh.delete(); blurred.delete(); gray.delete();
 
-  if (candidates.length < 4) return null;
+  if (candidates.length < 4) {
+    statusText.innerText = `Only found ${candidates.length}/4 corner markers — retake with better lighting/alignment.`;
+    frame.delete();
+    return;
+  }
 
   candidates.sort((a, b) => (a.cx + a.cy) - (b.cx + b.cy));
   const topLeft = candidates[0];
@@ -360,14 +324,6 @@ function detectMarkers(frame) {
   candidates.sort((a, b) => (a.cx - a.cy) - (b.cx - b.cy));
   const bottomLeft = candidates[0];
   const topRight = candidates[candidates.length - 1];
-
-  return { topLeft, topRight, bottomLeft, bottomRight };
-}
-
-// Warps `frame` using the given markers, sets warpedGray as a side effect,
-// and shows the result on warpedCanvas. `frame` is deleted when done.
-function warpFrame(frame, markers) {
-  const { topLeft, topRight, bottomLeft, bottomRight } = markers;
 
   const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
     topLeft.cx, topLeft.cy,
@@ -378,9 +334,13 @@ function warpFrame(frame, markers) {
   // IMPORTANT: the corner markers are printed inset from the physical page edge
   // by MARKER_MARGIN_PX (matching \markerMargin in the .tex template, in px at
   // 100dpi: 0.18in -> 18px). All bubble calibration coordinates (startX, startY,
-  // etc.) are measured from the page edge, not from the markers themselves, so
-  // markers must map to their true inset position within the full canvas, not
-  // to the canvas corners.
+  // etc.) are measured from the page edge, not from the markers themselves.
+  // If we map marker centers straight to the canvas corners (0,0)-(TARGET_W,TARGET_H),
+  // we're really stretching the smaller marker-to-marker span to fill the full
+  // canvas — which silently rescales AND offsets every bubble coordinate, with
+  // error growing the further a bubble is from the top-left marker. Instead we
+  // map markers to where they truly sit within the full page-edge-to-page-edge
+  // canvas, so page-edge-referenced bubble coordinates land correctly.
   const MARKER_MARGIN_PX = 18; // must match \markerMargin * 100 in answer-sheet.tex
   const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
     MARKER_MARGIN_PX, MARKER_MARGIN_PX,
@@ -402,21 +362,8 @@ function warpFrame(frame, markers) {
   cv.imshow('warpedCanvas', warpedColor);
 
   srcTri.delete(); dstTri.delete(); M.delete(); warpedColor.delete(); frame.delete();
-}
 
-// ---- Manual capture (for initial calibration) ----
-
-captureBtn.addEventListener('click', () => {
-  if (!cvReady || !liveMat) return;
-  const frame = liveMat.clone();
-  const markers = detectMarkers(frame);
-  if (!markers) {
-    statusText.innerText = 'Corner markers not found — retake with better lighting/alignment.';
-    frame.delete();
-    return;
-  }
-  warpFrame(frame, markers);
-  pauseLiveLoop();
+  stopCamera();
   captureBtn.disabled = true;
   retakeBtn.disabled = false;
   detectBtn.disabled = false;
@@ -431,82 +378,7 @@ retakeBtn.addEventListener('click', () => {
   csvBtn.disabled = true;
   retakeBtn.disabled = true;
   captureBtn.disabled = false;
-  resumeLiveLoop();
-});
-
-// ---- Auto-scan (hands-free, ZipGrade-style continuous scanning) ----
-
-function updateAutoScanStatus(msg, isSuccess) {
-  autoScanStatus.innerHTML = isSuccess ? `<span class="ok">${msg}</span>` : msg;
-}
-
-function autoScanTick() {
-  if (!autoScanActive || !cvReady || !liveMat) return;
-
-  const frame = liveMat.clone();
-  const markers = detectMarkers(frame);
-
-  if (!markers) {
-    stableCount = 0;
-    lastCentroids = null;
-    if (!autoScanArmed) autoScanArmed = true; // sheet removed — ready for the next one
-    updateAutoScanStatus('Auto-Scan on — show a sheet to the camera…');
-    frame.delete();
-    return;
-  }
-
-  const centroids = [markers.topLeft, markers.topRight, markers.bottomRight, markers.bottomLeft];
-  if (lastCentroids) {
-    const maxDelta = Math.max(...centroids.map((c, i) =>
-      Math.hypot(c.cx - lastCentroids[i].cx, c.cy - lastCentroids[i].cy)));
-    stableCount = maxDelta < STABILITY_TOLERANCE_PX ? stableCount + 1 : 1;
-  } else {
-    stableCount = 1;
-  }
-  lastCentroids = centroids;
-
-  if (!autoScanArmed) {
-    updateAutoScanStatus('Captured! Remove sheet to scan the next one…');
-    frame.delete();
-    return;
-  }
-
-  if (stableCount >= STABLE_TICKS_REQUIRED) {
-    autoScanArmed = false;
-    stableCount = 0;
-    warpFrame(frame, markers); // sets warpedGray, deletes frame
-    drawOverlay();
-    const scoreText = runDetectionAndScore();
-    cameraContainer.classList.remove('flash-success');
-    void cameraContainer.offsetWidth; // restart animation
-    cameraContainer.classList.add('flash-success');
-    updateAutoScanStatus(scoreText, true);
-  } else {
-    updateAutoScanStatus(`Auto-Scan on — hold steady… (${stableCount}/${STABLE_TICKS_REQUIRED})`);
-    frame.delete();
-  }
-}
-
-autoScanBtn.addEventListener('click', () => {
-  autoScanActive = !autoScanActive;
-  if (autoScanActive) {
-    autoScanArmed = true;
-    stableCount = 0;
-    lastCentroids = null;
-    autoScanBtn.textContent = 'Stop Auto-Scan';
-    autoScanBtn.classList.add('active');
-    captureBtn.disabled = true;
-    retakeBtn.disabled = true;
-    resumeLiveLoop();
-    updateAutoScanStatus('Auto-Scan on — show a sheet to the camera…');
-    autoScanIntervalId = setInterval(autoScanTick, CHECK_INTERVAL_MS);
-  } else {
-    autoScanBtn.textContent = 'Start Auto-Scan';
-    autoScanBtn.classList.remove('active');
-    captureBtn.disabled = false;
-    if (autoScanIntervalId) { clearInterval(autoScanIntervalId); autoScanIntervalId = null; }
-    updateAutoScanStatus('Auto-Scan off.');
-  }
+  startCamera();
 });
 
 // ---- Answer key ----
@@ -582,10 +454,6 @@ overlayBtn.addEventListener('click', drawOverlay);
 
 detectBtn.addEventListener('click', () => {
   if (!warpedGray) return;
-  runDetectionAndScore();
-});
-
-function runDetectionAndScore() {
   const p = getGridParams();
   lastResults = [];
   resultsTable.innerHTML = '';
@@ -629,25 +497,23 @@ function runDetectionAndScore() {
     resultsTable.appendChild(tr);
   }
 
-  let statusMsg = '';
   if (keyMatches) {
     const pct = ((correctCount / p.numQ) * 100).toFixed(1);
+    
+    // Instant Auto-Save like ZipGrade
     addCurrentToBatchAuto();
-    statusMsg = `Score: ${correctCount}/${p.numQ} (${pct}%) — Saved to Batch! (now ${batch.length} in batch)`;
-    scoreSummary.innerHTML = `<span class="ok">${statusMsg} — use "Remove Last Entry" below if this was a re-scan</span>`;
+    
+    scoreSummary.innerHTML = `<span class="ok">Score: ${correctCount}/${p.numQ} (${pct}%) — Saved to Batch! (now ${batch.length} in batch — use "Remove Last Entry" below if this was a re-scan)</span>`;
   } else if (answerKey.length) {
-    statusMsg = `Key has ${answerKey.length} item(s), sheet has ${p.numQ} — lengths don't match, no score computed.`;
-    scoreSummary.innerText = statusMsg;
+    scoreSummary.innerText = `Key has ${answerKey.length} item(s), sheet has ${p.numQ} — lengths don't match, no score computed.`;
   } else {
-    statusMsg = 'No answer key set — detected answers only, nothing scored or saved.';
     scoreSummary.innerText = '';
   }
 
   resultsPanel.hidden = false;
   csvBtn.disabled = false;
   saveDetectionAsKeyBtn.disabled = false;
-  return statusMsg;
-}
+});
 
 function sampleFill(grayMat, cx, cy, r) {
   const x0 = Math.max(0, Math.round(cx - r));
@@ -751,3 +617,6 @@ exportBatchBtn.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
+
+
