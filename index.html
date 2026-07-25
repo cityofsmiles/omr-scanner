@@ -151,6 +151,7 @@
   <input type="text" id="studentIdInput" placeholder="e.g. 2024-0113 or leave blank"
     style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; border-radius:4px; padding:6px; font-size:0.85rem; margin-bottom: 8px;">
   <button id="exportBatchBtn" class="secondary" disabled>Export Batch Summary CSV</button>
+  <button id="removeLastBtn" class="secondary" disabled>Remove Last Entry</button>
   <button id="clearBatchBtn" class="secondary" disabled>Clear Batch</button>
   <p id="batchStatus" class="sub" style="margin-top:8px;">Batch: 0 students</p>
 </div>
@@ -178,11 +179,16 @@ const keyStatus = document.getElementById('keyStatus');
 const studentIdInput = document.getElementById('studentIdInput');
 const sectionNameInput = document.getElementById('sectionNameInput');
 const exportBatchBtn = document.getElementById('exportBatchBtn');
+const removeLastBtn = document.getElementById('removeLastBtn');
 const clearBatchBtn = document.getElementById('clearBatchBtn');
 const batchStatus = document.getElementById('batchStatus');
 
-// Target dimensions set to match A4 paper aspect ratio (8.27in x 11.69in @ 100dpi)
-const TARGET_W = 827, TARGET_H = 1169; 
+// Target dimensions match ONE cut-out mini-sheet (4.135in x 5.845in @ 100dpi),
+// since each mini-sheet is cut apart and scanned individually. This must match
+// the physical piece of paper in frame, not the full printed A4 sheet — using
+// the full-page size here would warp each mini-sheet's markers to fill a canvas
+// 2x too large, offsetting every bubble coordinate by 2x.
+const TARGET_W = 414, TARGET_H = 585;
 
 let stream = null;
 let liveMat = null;       
@@ -465,7 +471,7 @@ detectBtn.addEventListener('click', () => {
     // Instant Auto-Save like ZipGrade
     addCurrentToBatchAuto();
     
-    scoreSummary.innerHTML = `<span class="ok">Score: ${correctCount}/${p.numQ} (${pct}%) — Saved to Batch!</span>`;
+    scoreSummary.innerHTML = `<span class="ok">Score: ${correctCount}/${p.numQ} (${pct}%) — Saved to Batch! (now ${batch.length} in batch — use "Remove Last Entry" below if this was a re-scan)</span>`;
   } else if (answerKey.length) {
     scoreSummary.innerText = `Key has ${answerKey.length} item(s), sheet has ${p.numQ} — lengths don't match, no score computed.`;
   } else {
@@ -520,8 +526,11 @@ csvBtn.addEventListener('click', () => {
 // ---- Batch ----
 
 function updateBatchStatus() {
-  batchStatus.innerText = `Batch: ${batch.length} student${batch.length === 1 ? '' : 's'}`;
+  const last = batch[batch.length - 1];
+  const lastInfo = last ? ` — last added: ${last.id} (${last.correctFlags.filter(Boolean).length}/${last.correctFlags.length})` : '';
+  batchStatus.innerText = `Batch: ${batch.length} student${batch.length === 1 ? '' : 's'}${lastInfo}`;
   exportBatchBtn.disabled = batch.length === 0;
+  removeLastBtn.disabled = batch.length === 0;
   clearBatchBtn.disabled = batch.length === 0;
 }
 
@@ -535,6 +544,13 @@ function addCurrentToBatchAuto() {
   studentIdInput.value = '';
   updateBatchStatus();
 }
+
+removeLastBtn.addEventListener('click', () => {
+  if (!batch.length) return;
+  const removed = batch.pop();
+  updateBatchStatus();
+  scoreSummary.innerHTML = `<span class="flag">Removed "${removed.id}" from batch.</span>`;
+});
 
 clearBatchBtn.addEventListener('click', () => {
   if (!confirm(`Clear all ${batch.length} student(s) from the batch? This can't be undone.`)) return;
