@@ -745,7 +745,9 @@ exportBatchBtn.addEventListener('click', () => {
   const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = 'omr_batch_summary.csv'; a.click();
+  const section = sectionNameInput.value.trim() || 'Default Section';
+  const safeSection = section.replace(/[^a-z0-9\-_ ]/gi, '').trim().replace(/\s+/g, '_') || 'batch';
+  a.href = url; a.download = `${safeSection}.csv`; a.click();
   URL.revokeObjectURL(url);
 });
 </script>
