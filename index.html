@@ -286,8 +286,16 @@ captureBtn.addEventListener('click', () => {
     if (area > frameArea * 0.0005 && area < frameArea * 0.02) {
       const rect = cv.boundingRect(c);
       const aspect = rect.width / rect.height;
-      if (aspect > 0.7 && aspect < 1.3) {
-        candidates.push({ cx: rect.x + rect.width / 2, cy: rect.y + rect.height / 2, area });
+      // extent = contour area / bounding-box area. A solid filled square has
+      // extent close to 1.0. A circle (like an answer bubble) traced as a
+      // contour has extent close to pi/4 (~0.785), since the circle doesn't
+      // fill the corners of its own bounding box. This lets us reject bubbles
+      // that would otherwise pass the area/aspect checks and get mistaken for
+      // corner markers, which silently corrupts the whole perspective warp.
+      const boxArea = rect.width * rect.height;
+      const extent = boxArea > 0 ? area / boxArea : 0;
+      if (aspect > 0.7 && aspect < 1.3 && extent > 0.85) {
+        candidates.push({ cx: rect.x + rect.width / 2, cy: rect.y + rect.height / 2, area, extent });
       }
     }
     c.delete();
