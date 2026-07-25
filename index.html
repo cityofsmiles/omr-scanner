@@ -331,8 +331,22 @@ captureBtn.addEventListener('click', () => {
     bottomRight.cx, bottomRight.cy,
     bottomLeft.cx, bottomLeft.cy
   ]);
+  // IMPORTANT: the corner markers are printed inset from the physical page edge
+  // by MARKER_MARGIN_PX (matching \markerMargin in the .tex template, in px at
+  // 100dpi: 0.18in -> 18px). All bubble calibration coordinates (startX, startY,
+  // etc.) are measured from the page edge, not from the markers themselves.
+  // If we map marker centers straight to the canvas corners (0,0)-(TARGET_W,TARGET_H),
+  // we're really stretching the smaller marker-to-marker span to fill the full
+  // canvas — which silently rescales AND offsets every bubble coordinate, with
+  // error growing the further a bubble is from the top-left marker. Instead we
+  // map markers to where they truly sit within the full page-edge-to-page-edge
+  // canvas, so page-edge-referenced bubble coordinates land correctly.
+  const MARKER_MARGIN_PX = 18; // must match \markerMargin * 100 in answer-sheet.tex
   const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
-    0, 0, TARGET_W, 0, TARGET_W, TARGET_H, 0, TARGET_H
+    MARKER_MARGIN_PX, MARKER_MARGIN_PX,
+    TARGET_W - MARKER_MARGIN_PX, MARKER_MARGIN_PX,
+    TARGET_W - MARKER_MARGIN_PX, TARGET_H - MARKER_MARGIN_PX,
+    MARKER_MARGIN_PX, TARGET_H - MARKER_MARGIN_PX
   ]);
 
   const M = cv.getPerspectiveTransform(srcTri, dstTri);
