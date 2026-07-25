@@ -100,6 +100,8 @@
       <div><label>Choice spacing X</label><input type="number" id="stepX" value="48"></div>
       <div><label>Bubble radius</label><input type="number" id="radius" value="12"></div>
       <div><label>Fill threshold %</label><input type="number" id="thresh" value="40"></div>
+      <div><label>Rows per column</label><input type="number" id="rowsPerCol" value="10" min="1"></div>
+      <div><label>Column X offset (px)</label><input type="number" id="colOffset" value="0"></div>
     </div>
     <button id="overlayBtn" class="secondary">Redraw Grid Overlay</button>
     <p class="sub" style="margin-top:10px;">Adjust values until the overlay circles sit exactly over each bubble on the warped sheet, then hit Detect Answers.</p>
@@ -300,7 +302,21 @@ function getGridParams() {
     stepY: parseFloat(document.getElementById('stepY').value),
     stepX: parseFloat(document.getElementById('stepX').value),
     radius: parseFloat(document.getElementById('radius').value),
-    thresh: parseFloat(document.getElementById('thresh').value)
+    thresh: parseFloat(document.getElementById('thresh').value),
+    rowsPerCol: parseInt(document.getElementById('rowsPerCol').value, 10),
+    colOffset: parseFloat(document.getElementById('colOffset').value)
+  };
+}
+
+// Given a 0-indexed question number, return {x, y} of its first-choice bubble center,
+// wrapping into a new column every rowsPerCol questions. With colOffset=0 this collapses
+// to the original single-column behavior.
+function questionPos(q, p) {
+  const col = Math.floor(q / p.rowsPerCol);
+  const row = q % p.rowsPerCol;
+  return {
+    x: p.startX + col * p.colOffset,
+    y: p.startY + row * p.stepY
   };
 }
 
@@ -310,10 +326,10 @@ function drawOverlay() {
   const colorMat = new cv.Mat();
   cv.cvtColor(warpedGray, colorMat, cv.COLOR_GRAY2RGBA);
   for (let q = 0; q < p.numQ; q++) {
-    const y = p.startY + q * p.stepY;
+    const pos = questionPos(q, p);
     for (let c = 0; c < p.numC; c++) {
-      const x = p.startX + c * p.stepX;
-      cv.circle(colorMat, new cv.Point(x, y), p.radius, [63, 185, 80, 255], 2);
+      const x = pos.x + c * p.stepX;
+      cv.circle(colorMat, new cv.Point(x, pos.y), p.radius, [63, 185, 80, 255], 2);
     }
   }
   cv.imshow('warpedCanvas', colorMat);
@@ -330,11 +346,11 @@ detectBtn.addEventListener('click', () => {
   const letters = 'ABCDEFGHIJ';
 
   for (let q = 0; q < p.numQ; q++) {
-    const y = p.startY + q * p.stepY;
+    const pos = questionPos(q, p);
     let fills = [];
     for (let c = 0; c < p.numC; c++) {
-      const x = p.startX + c * p.stepX;
-      fills.push(sampleFill(warpedGray, x, y, p.radius));
+      const x = pos.x + c * p.stepX;
+      fills.push(sampleFill(warpedGray, x, pos.y, p.radius));
     }
     const maxFill = Math.max(...fills);
     const sorted = [...fills].sort((a, b) => b - a);
