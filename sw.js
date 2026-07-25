@@ -5,7 +5,7 @@
 //
 // Bump CACHE_NAME whenever index.html/manifest/icons change, so returning
 // users get the new version instead of a stale cached one.
-const CACHE_NAME = 'omr-scanner-v1';
+const CACHE_NAME = 'omr-scanner-v2';
 
 const APP_SHELL = [
   './',
@@ -16,11 +16,26 @@ const APP_SHELL = [
   'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0-release.1/dist/opencv.js'
 ];
 
+// IMPORTANT: cache.addAll() is all-or-nothing — if even one URL in the list
+// fails to fetch (e.g. the cross-origin CDN file, which is the most fragile
+// entry here), the entire install step rejects and the service worker never
+// activates. On Android Chrome, a service worker that never activates is the
+// most common reason "Add to Home Screen" only creates a plain bookmark
+// shortcut instead of offering a real "Install app" — installability
+// requires an active service worker with a fetch handler. Caching each
+// resource independently means one flaky/CORS-blocked resource only costs
+// that one resource's offline availability, not the whole PWA install.
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(
+        APP_SHELL.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn('SW: failed to cache', url, err);
+          })
+        )
+      )
+    ).then(() => self.skipWaiting())
   );
 });
 

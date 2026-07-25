@@ -1,4 +1,5 @@
 {
+  "id": "/omr-scanner/",
   "name": "OMR Answer Sheet Scanner",
   "short_name": "OMR Scanner",
   "description": "Camera-based OMR answer sheet scanner with auto-scoring and batch item analysis",
