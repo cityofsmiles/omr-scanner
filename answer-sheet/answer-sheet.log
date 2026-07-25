@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.22.0 (TeX Live 2025/Debian)  (format=lualatex 2026.6.23)  25 JUL 2026 11:27
+This is LuaHBTeX, Version 1.22.0 (TeX Live 2025/Debian)  (format=lualatex 2026.6.23)  25 JUL 2026 12:57
  system commands enabled.
 **answer-sheet.tex
 (./answer-sheet.tex
@@ -391,13 +391,13 @@ File: tikzlibrarytopaths.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/helvet.sty
 Package: helvet 2020/03/25 PSNFSS-v9.3 (WaS) 
 )
-LaTeX Font Info:    Trying to load font information for TU+phv on input line 41
+LaTeX Font Info:    Trying to load font information for TU+phv on input line 25
 .
-LaTeX Font Info:    No file TUphv.fd. on input line 41.
+LaTeX Font Info:    No file TUphv.fd. on input line 25.
 
 
 LaTeX Font Warning: Font shape `TU/phv/m/n' undefined
-(Font)              using `TU/lmr/m/n' instead on input line 41.
+(Font)              using `TU/lmr/m/n' instead on input line 25.
 
 (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-luatex.def
 File: l3backend-luatex.def 2025-10-09 L3 backend support: PDF output (LuaTeX)
@@ -406,22 +406,22 @@ Inserting `l3color' in `luaotfload.parse_color'.)
 (./answer-sheet.aux)
 \openout1 = answer-sheet.aux
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: luatex
@@ -431,12 +431,12 @@ LaTeX Font Info:    ... okay on input line 41.
 * layout: <same size as paper>
 * layoutoffset:(h,v)=(0.0pt,0.0pt)
 * modes: 
-* h-part:(L,W,R)=(0.0pt, 614.295pt, 0.0pt)
-* v-part:(T,H,B)=(0.0pt, 794.96999pt, 0.0pt)
-* \paperwidth=614.295pt
-* \paperheight=794.96999pt
-* \textwidth=614.295pt
-* \textheight=794.96999pt
+* h-part:(L,W,R)=(0.0pt, 597.6732pt, 0.0pt)
+* v-part:(T,H,B)=(0.0pt, 844.83647pt, 0.0pt)
+* \paperwidth=597.6732pt
+* \paperheight=844.83647pt
+* \textwidth=597.6732pt
+* \textheight=844.83647pt
 * \oddsidemargin=-72.26999pt
 * \evensidemargin=-72.26999pt
 * \topmargin=-109.26999pt
@@ -481,18 +481,12 @@ e
 ))
 
 LaTeX Font Warning: Font shape `TU/phv/b/n' undefined
-(Font)              using `TU/phv/m/n' instead on input line 63.
+(Font)              using `TU/phv/m/n' instead on input line 79.
 
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <10.95> on input line 66.
+(Font)              <6> on input line 79.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 66.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 66.
-
-LaTeX Font Warning: Font shape `TU/phv/m/it' undefined
-(Font)              using `TU/phv/m/n' instead on input line 81.
-
+(Font)              <5> on input line 79.
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./answer-sheet.aux)
@@ -507,19 +501,19 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 )
 
 Here is how much of LuaTeX's memory you used:
- 12814 strings out of 476076
- 195338,794899 words of node,token memory allocated
+ 12821 strings out of 476076
+ 745124,1144653 words of node,token memory allocated
  413 words of node memory still in use:
    3 hlist, 1 vlist, 1 rule, 2 glue, 3 kern, 1 glyph, 5 attribute, 48 glue_spec,
  5 attribute_list, 2 write nodes
-   avail lists: 1:1,2:18224,3:9505,4:830,5:42,6:2,7:8902,8:2,9:3634,11:18
- 34936 multiletter control sequences out of 65536+600000
- 28 fonts using 1740759 bytes
- 102i,6n,101p,411b,737s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/share/texmf/fonts/opentype/public/lm/lmroman8-regular.otf></usr/share/texm
-f/fonts/opentype/public/lm/lmroman10-regular.otf></usr/share/texmf/fonts/opentyp
-e/public/lm/lmroman12-regular.otf>
-Output written on answer-sheet.pdf (1 page, 31153 bytes).
+   avail lists: 1:3,2:69888,3:37783,4:3290,5:42,6:2,7:31912,8:2,9:14194,11:8
+ 34943 multiletter control sequences out of 65536+600000
+ 25 fonts using 1554391 bytes
+ 102i,6n,101p,411b,817s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/share/texmf/fonts/opentype/public/lm/lmroman5-regular.otf></usr/share/texm
+f/fonts/opentype/public/lm/lmroman6-regular.otf></usr/share/texmf/fonts/opentype
+/public/lm/lmroman10-regular.otf>
+Output written on answer-sheet.pdf (1 page, 81795 bytes).
 
 PDF statistics: 32 PDF objects out of 1000 (max. 8388607)
  19 compressed objects within 1 object stream

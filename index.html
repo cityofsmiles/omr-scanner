@@ -111,25 +111,25 @@
   <div class="panel" style="min-width:260px;">
     <strong style="font-size:0.9rem;">Bubble grid calibration</strong>
     <div class="grid2">
-      <div><label for="numQ">Questions</label><input type="number" id="numQ" value="10" min="1"></div>
+      <div><label for="numQ">Questions</label><input type="number" id="numQ" value="50" min="1"></div>
       <div><label for="numC">Choices (A,B,C...)</label><input type="number" id="numC" value="4" min="2" max="10"></div>
-      <div><label for="startX">Start X (px)</label><input type="number" id="startX" value="80" min="0"></div>
-      <div><label for="startY">Start Y (px)</label><input type="number" id="startY" value="120" min="0"></div>
-      <div><label for="stepY">Row spacing Y</label><input type="number" id="stepY" value="46" min="1"></div>
-      <div><label for="stepX">Choice spacing X</label><input type="number" id="stepX" value="48" min="1"></div>
-      <div><label for="radius">Bubble radius</label><input type="number" id="radius" value="12" min="1"></div>
-      <div><label for="thresh">Fill threshold %</label><input type="number" id="thresh" value="40" min="0" max="100"></div>
-      <div><label for="rowsPerCol">Rows per column</label><input type="number" id="rowsPerCol" value="10" min="1"></div>
-      <div><label for="colOffset">Column X offset (px)</label><input type="number" id="colOffset" value="0"></div>
+      <div><label for="startX">Start X (px)</label><input type="number" id="startX" value="35" min="0"></div>
+      <div><label for="startY">Start Y (px)</label><input type="number" id="startY" value="115" min="0"></div>
+      <div><label for="stepY">Row spacing Y</label><input type="number" id="stepY" value="16" min="1"></div>
+      <div><label for="stepX">Choice spacing X</label><input type="number" id="stepX" value="20" min="1"></div>
+      <div><label for="radius">Bubble radius</label><input type="number" id="radius" value="5.5" min="1" step="0.5"></div>
+      <div><label for="thresh">Fill threshold %</label><input type="number" id="thresh" value="35" min="0" max="100"></div>
+      <div><label for="rowsPerCol">Rows per column</label><input type="number" id="rowsPerCol" value="25" min="1"></div>
+      <div><label for="colOffset">Column X offset (px)</label><input type="number" id="colOffset" value="180"></div>
     </div>
     <button id="overlayBtn" class="secondary">Redraw Grid Overlay</button>
-    <p class="sub" style="margin-top:10px;">Adjust values until the overlay circles sit exactly over each bubble on the warped sheet, then hit Detect Answers.</p>
+    <p class="sub" style="margin-top:10px;">Adjust values until overlay circles fit each bubble, then hit Detect Answers.</p>
   </div>
 
   <div class="panel" style="min-width:260px;">
     <strong style="font-size:0.9rem;">Answer key</strong>
     <p class="sub" style="margin:6px 0;">Type it, or scan a filled-in key sheet and save the detection as the key.</p>
-    <textarea id="keyInput" rows="3" placeholder="e.g. ABCDAABCDABCDAABCDABCDAAB"
+    <textarea id="keyInput" rows="3" placeholder="e.g. ABCDAABCDABCDAABCDABCDAAB..."
       style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; border-radius:4px; padding:6px; font-size:0.85rem; font-family:monospace;"></textarea>
     <button id="applyKeyBtn" class="secondary">Apply Typed Key</button>
     <button id="saveDetectionAsKeyBtn" class="secondary" disabled>Save Last Detection as Key</button>
@@ -146,7 +146,7 @@
 
 <div class="panel" style="margin-top:16px; max-width:420px;">
   <strong style="font-size:0.9rem;">Batch (item analysis)</strong>
-  <p class="sub" style="margin:6px 0;">Requires a matching answer key. Scanned sheets are automatically added to the current section batch upon detection.</p>
+  <p class="sub" style="margin:6px 0;">Requires a matching answer key. Scanned sheets are automatically added to the section batch upon detection.</p>
   <label for="studentIdInput">Student ID / name (optional for next scan)</label>
   <input type="text" id="studentIdInput" placeholder="e.g. 2024-0113 or leave blank"
     style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; border-radius:4px; padding:6px; font-size:0.85rem; margin-bottom: 8px;">
@@ -181,16 +181,17 @@ const exportBatchBtn = document.getElementById('exportBatchBtn');
 const clearBatchBtn = document.getElementById('clearBatchBtn');
 const batchStatus = document.getElementById('batchStatus');
 
-const TARGET_W = 850, TARGET_H = 1100; // canonical warped sheet size (px)
+// Target dimensions set to match A4 paper aspect ratio (8.27in x 11.69in @ 100dpi)
+const TARGET_W = 827, TARGET_H = 1169; 
 
 let stream = null;
-let liveMat = null;       // reused each live frame
-let warpedGray = null;    // persists after capture, deleted on retake
+let liveMat = null;       
+let warpedGray = null;    
 let rafId = null;
 let cvReady = false;
 let lastResults = [];
-let answerKey = []; // array of correct letters, e.g. ['A','C','B',...]
-let batch = []; // array of {id, section, answers: [...], correctFlags: [bool,...]}
+let answerKey = []; 
+let batch = []; 
 
 function onOpenCvReady() {
   cv['onRuntimeInitialized'] = () => {
@@ -271,7 +272,6 @@ captureBtn.addEventListener('click', () => {
   const hierarchy = new cv.Mat();
   cv.findContours(thresh, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
 
-  // Find small-ish, roughly square, solid contours = corner markers
   const frameArea = frame.rows * frame.cols;
   let candidates = [];
   for (let i = 0; i < contours.size(); i++) {
@@ -294,7 +294,6 @@ captureBtn.addEventListener('click', () => {
     return;
   }
 
-  // Pick the 4 extreme corner candidates by x+y and x-y
   candidates.sort((a, b) => (a.cx + a.cy) - (b.cx + b.cy));
   const topLeft = candidates[0];
   const bottomRight = candidates[candidates.length - 1];
@@ -463,7 +462,7 @@ detectBtn.addEventListener('click', () => {
   if (keyMatches) {
     const pct = ((correctCount / p.numQ) * 100).toFixed(1);
     
-    // Auto-save to section batch like ZipGrade
+    // Instant Auto-Save like ZipGrade
     addCurrentToBatchAuto();
     
     scoreSummary.innerHTML = `<span class="ok">Score: ${correctCount}/${p.numQ} (${pct}%) — Saved to Batch!</span>`;

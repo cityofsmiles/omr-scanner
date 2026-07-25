@@ -1,103 +1,80 @@
-% ============================================================
-% OMR Answer Sheet Template
-% Paper: Letter (8.5in x 11in) — matches scanner TARGET_W=850, TARGET_H=1100
-%
-% COORDINATE SYSTEM: the tikzpicture below is set up with
-%   x = 1in (rightward), y = -1in (downward), origin = page top-left.
-% This means every coordinate (a,b) you write in inches here maps
-% DIRECTLY to pixel (a*100, b*100) in the scanner's warped canvas,
-% since the warp target is 850x1100 = (8.5*100, 11*100).
-%
-% The defaults below (startX=0.8in, startY=1.2in, stepX=0.48in,
-% stepY=0.46in, radius=0.12in) are chosen to exactly match the
-% scanner's default calibration values (80, 120, 48, 46, 12 px) —
-% so if you print this unmodified, you should need ZERO calibration
-% in the web app. If you change numQ/numC/spacing here, update the
-% matching fields in the scanner UI (multiply inches by 100).
-% ============================================================
-
 \documentclass[12pt]{article}
-\usepackage[paperwidth=8.5in,paperheight=11in,margin=0in]{geometry}
+% Paper size: A4 (8.27in x 11.69in / 210mm x 297mm)
+\usepackage[paperwidth=8.27in,paperheight=11.69in,margin=0in]{geometry}
 \usepackage{tikz}
 \usepackage{helvet}
 \renewcommand{\familydefault}{\sfdefault}
 \pagestyle{empty}
 
-% ---- Configurable parameters (in inches) ----
-\newcommand{\numQuestions}{50}
+% Mini-sheet Parameters (Inches)
+\newcommand{\numQuestions}{50}       % 50 Items Default
 \newcommand{\numChoices}{4}          % A, B, C, D
-\newcommand{\startX}{0.8}
-\newcommand{\startY}{2.45}
-\newcommand{\stepX}{0.48}
-\newcommand{\stepY}{0.32}
-\newcommand{\rowsPerCol}{25}         % questions per column before wrapping
-\newcommand{\colOffset}{2.8}         % horizontal distance between column starts (in)
-\newcommand{\bubbleRadius}{0.12}
-\newcommand{\markerSize}{0.15}
-\newcommand{\markerMargin}{0.4}
+\newcommand{\rowsPerCol}{25}         % 25 rows per column (Col 1: Q1-25, Col 2: Q26-50)
+\newcommand{\colOffset}{1.80}        % Horizontal distance between columns (in)
 
-\def\choiceLetters{A,B,C,D,E,F,G,H,I,J}
+\newcommand{\startX}{0.35}          
+\newcommand{\startY}{1.15}          
+\newcommand{\stepX}{0.20}
+\newcommand{\stepY}{0.16}          
+\newcommand{\bubbleRadius}{0.055}
+\newcommand{\markerSize}{0.10}
+\newcommand{\markerMargin}{0.15}
+
+\def\choiceLetters{A,B,C,D}
 
 \begin{document}
 
-\begin{tikzpicture}[remember picture, overlay, x=1in, y=-1in,
-    shift={(current page.north west)}]
+\begin{tikzpicture}[remember picture, overlay, x=1in, y=-1in, shift={(current page.north west)}]
 
-  % ---------------------------------------------------------
-  % 1. Corner fiducial markers (solid black squares)
-  %    Scanner looks for 4 small square dark contours near
-  %    the corners to compute the perspective warp.
-  % ---------------------------------------------------------
-  \foreach \cx/\cy in {\markerMargin/\markerMargin,
-                       {8.5-\markerMargin}/\markerMargin,
-                       \markerMargin/{11-\markerMargin},
-                       {8.5-\markerMargin}/{11-\markerMargin}} {
-    \fill[black] (\cx-\markerSize/2, \cy-\markerSize/2)
-                 rectangle (\cx+\markerSize/2, \cy+\markerSize/2);
-  }
+  % Tile 4 mini sheets: 2 columns (X) x 2 rows (Y)
+  \foreach \gridX in {0, 1} {
+    \foreach \gridY in {0, 1} {
+      
+      % Calculate Top-Left Origin of each quarter sheet (4.135in x 5.845in)
+      \pgfmathsetmacro{\offsetX}{\gridX * 4.135}
+      \pgfmathsetmacro{\offsetY}{\gridY * 5.845}
 
-  % ---------------------------------------------------------
-  % 2. Header block: name / LRN / subject / date
-  % ---------------------------------------------------------
-  \node[anchor=north west, font=\bfseries\large] at (\markerMargin+0.3, \markerMargin+0.15)
-    {OMR Answer Sheet};
+      % 1. Cutting Guide Lines
+      \draw[gray, dashed, line width=0.3pt] 
+        (\offsetX, \offsetY) rectangle (\offsetX + 4.135, \offsetY + 5.845);
 
-  \node[anchor=north west, font=\small] at (\markerMargin+0.3, \markerMargin+0.45)
-    {Name: \underline{\hspace{2.8in}}};
-  \node[anchor=north west, font=\small] at (\markerMargin+0.3, \markerMargin+0.7)
-    {LRN: \underline{\hspace{1.6in}} \quad Section: \underline{\hspace{1.4in}}};
-  \node[anchor=north west, font=\small] at (\markerMargin+0.3, \markerMargin+0.95)
-    {Subject: \underline{\hspace{1.8in}} \quad Date: \underline{\hspace{1.4in}}};
+      % 2. Corner Fiducial Markers
+      \pgfmathsetmacro{\leftX}{\markerMargin}
+      \pgfmathsetmacro{\rightX}{4.135 - \markerMargin}
+      \pgfmathsetmacro{\topY}{\markerMargin}
+      \pgfmathsetmacro{\bottomY}{5.845 - \markerMargin}
 
-  % Rule under header
-  \draw[black, line width=0.5pt]
-    (\markerMargin+0.3, \markerMargin+1.35) -- (8.5-\markerMargin-0.3, \markerMargin+1.35);
+      \foreach \cx/\cy in {\leftX/\topY, \rightX/\topY, \leftX/\bottomY, \rightX/\bottomY} {
+        \fill[black] (\offsetX + \cx - \markerSize/2, \offsetY + \cy - \markerSize/2)
+                     rectangle (\offsetX + \cx + \markerSize/2, \offsetY + \cy + \markerSize/2);
+      }
 
-  % ---------------------------------------------------------
-  % 3. Instructions
-  % ---------------------------------------------------------
-  \node[anchor=north west, font=\scriptsize\itshape]
-    at (\markerMargin+0.3, \markerMargin+1.55)
-    {Shade each bubble completely using a pencil or dark pen. Erase clean if changing an answer.};
+      % 3. Header Block
+      \node[anchor=north west, font=\bfseries\small] at (\offsetX + \markerMargin + 0.1, \offsetY + \markerMargin + 0.02) {OMR Answer Sheet (50 Qs)};
+      \node[anchor=north west, font=\tiny] at (\offsetX + \markerMargin + 0.1, \offsetY + \markerMargin + 0.35) {Name: \underline{\hspace{1.5in}} \quad Sec/ID: \underline{\hspace{0.7in}}};
 
-  % ---------------------------------------------------------
-  % 4. Bubble grid: numQuestions rows x numChoices columns
-  % ---------------------------------------------------------
-  \foreach \q in {1,...,\numQuestions} {
-    \pgfmathtruncatemacro{\colIndex}{floor((\q-1)/\rowsPerCol)}
-    \pgfmathtruncatemacro{\rowIndex}{mod(\q-1,\rowsPerCol)}
-    \pgfmathsetmacro{\rowY}{\startY + \rowIndex*\stepY}
-    \pgfmathsetmacro{\colBaseX}{\startX + \colIndex*\colOffset}
+      % 4. 50-Item Bubble Grid (2 Columns of 25)
+      \foreach \q in {1,...,\numQuestions} {
+        % Calculate column (0 or 1) and row index (0 to 24)
+        \pgfmathtruncatemacro{\colIndex}{(\q-1)/\rowsPerCol}
+        \pgfmathtruncatemacro{\rowIndex}{mod(\q-1,\rowsPerCol)}
 
-    % Question number label, left of the bubble row
-    \node[anchor=east, font=\small] at (\colBaseX-0.25, \rowY) {\q.};
+        \pgfmathsetmacro{\rowY}{\offsetY + \startY + \rowIndex*\stepY}
+        \pgfmathsetmacro{\baseX}{\offsetX + \startX + \colIndex*\colOffset}
 
-    \foreach \c [count=\ci from 0] in \choiceLetters {
-      \ifnum\ci<\numChoices
-        \pgfmathsetmacro{\colX}{\colBaseX + \ci*\stepX}
-        \draw[black, line width=0.8pt] (\colX, \rowY) circle (\bubbleRadius);
-        \node[font=\scriptsize] at (\colX, \rowY) {\c};
-      \fi
+        % Question Number Label
+        \node[anchor=east, font=\tiny] at (\baseX - 0.08, \rowY) {\q.};
+
+        % Answer Choices
+        \foreach \c [count=\ci from 0] in \choiceLetters {
+          \ifnum\ci<\numChoices
+            \pgfmathsetmacro{\colX}{\baseX + \ci*\stepX}
+            \draw[black, line width=0.4pt] (\colX, \rowY) circle (\bubbleRadius);
+            \node[font=\fontsize{3.5}{3.5}\selectfont] at (\colX, \rowY) {\c};
+          \fi
+        }
+      }
+
     }
   }
 
