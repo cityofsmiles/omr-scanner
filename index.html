@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -125,6 +125,18 @@
   <table id="resultsTable"><thead><tr><th>Q</th><th>Answer</th><th>Fill %</th><th>Key</th></tr></thead><tbody></tbody></table>
 </div>
 
+<div class="panel" style="margin-top:16px; max-width:420px;">
+  <strong style="font-size:0.9rem;">Batch (item analysis)</strong>
+  <p class="sub" style="margin:6px 0;">Requires a matching answer key. Add each scanned student to the batch, then export one summary showing how many students got each item right.</p>
+  <label>Student ID / name (optional)</label>
+  <input type="text" id="studentIdInput" placeholder="e.g. 2024-0113 or leave blank"
+    style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; border-radius:4px; padding:6px; font-size:0.85rem;">
+  <button id="addToBatchBtn" disabled>Add Current Sheet to Batch</button>
+  <button id="exportBatchBtn" class="secondary" disabled>Export Batch Summary CSV</button>
+  <button id="clearBatchBtn" class="secondary" disabled>Clear Batch</button>
+  <p id="batchStatus" class="sub" style="margin-top:8px;">Batch: 0 students</p>
+</div>
+
 <!-- Pinned OpenCV.js version, not the floating docs/4.x URL -->
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0-release.1/dist/opencv.js" onload="onOpenCvReady();"></script>
 
@@ -145,6 +157,11 @@ const keyInput = document.getElementById('keyInput');
 const applyKeyBtn = document.getElementById('applyKeyBtn');
 const saveDetectionAsKeyBtn = document.getElementById('saveDetectionAsKeyBtn');
 const keyStatus = document.getElementById('keyStatus');
+const studentIdInput = document.getElementById('studentIdInput');
+const addToBatchBtn = document.getElementById('addToBatchBtn');
+const exportBatchBtn = document.getElementById('exportBatchBtn');
+const clearBatchBtn = document.getElementById('clearBatchBtn');
+const batchStatus = document.getElementById('batchStatus');
 
 const TARGET_W = 850, TARGET_H = 1100; // canonical warped sheet size (px)
 
@@ -155,6 +172,7 @@ let rafId = null;
 let cvReady = false;
 let lastResults = [];
 let answerKey = []; // array of correct letters, e.g. ['A','C','B',...]
+let batch = []; // array of {id, answers: [...], correctFlags: [bool,...]}
 
 function onOpenCvReady() {
   cv['onRuntimeInitialized'] = () => {
@@ -442,6 +460,7 @@ detectBtn.addEventListener('click', () => {
   resultsPanel.hidden = false;
   csvBtn.disabled = false;
   saveDetectionAsKeyBtn.disabled = false;
+  addToBatchBtn.disabled = !keyMatches;
 });
 
 // Fill % = darkness inside circular ROI, 0-100, using mean pixel intensity inverted
@@ -482,6 +501,55 @@ csvBtn.addEventListener('click', () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'omr_results.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ---- Batch (item analysis across many scanned sheets) ----
+
+function updateBatchStatus() {
+  batchStatus.innerText = `Batch: ${batch.length} student${batch.length === 1 ? '' : 's'}`;
+  exportBatchBtn.disabled = batch.length === 0;
+  clearBatchBtn.disabled = batch.length === 0;
+}
+
+addToBatchBtn.addEventListener('click', () => {
+  if (!lastResults.length || answerKey.length !== lastResults.length) return;
+  const id = studentIdInput.value.trim() || `Student ${batch.length + 1}`;
+  const answers = lastResults.map(r => r.answer);
+  const correctFlags = lastResults.map((r, i) => answerKey[i] === r.answer.replace('?', ''));
+  batch.push({ id, answers, correctFlags });
+  studentIdInput.value = '';
+  updateBatchStatus();
+});
+
+clearBatchBtn.addEventListener('click', () => {
+  if (!confirm(`Clear all ${batch.length} student(s) from the batch? This can't be undone.`)) return;
+  batch = [];
+  updateBatchStatus();
+});
+
+exportBatchBtn.addEventListener('click', () => {
+  if (!batch.length) return;
+  const numQ = batch[0].correctFlags.length;
+  const rows = ['question,correct_count,total_students,percent_correct'];
+
+  for (let q = 0; q < numQ; q++) {
+    const count = batch.reduce((sum, s) => sum + (s.correctFlags[q] ? 1 : 0), 0);
+    const pct = ((count / batch.length) * 100).toFixed(1);
+    rows.push(`${q + 1},${count},${batch.length},${pct}%`);
+  }
+
+  rows.push('');
+  rows.push('student_id,score,percent');
+  batch.forEach(s => {
+    const correct = s.correctFlags.filter(Boolean).length;
+    rows.push(`${s.id},${correct}/${numQ},${((correct / numQ) * 100).toFixed(1)}%`);
+  });
+
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'omr_batch_summary.csv'; a.click();
   URL.revokeObjectURL(url);
 });
 </script>
