@@ -24,12 +24,14 @@
 \pagestyle{empty}
 
 % ---- Configurable parameters (in inches) ----
-\newcommand{\numQuestions}{25}
+\newcommand{\numQuestions}{50}
 \newcommand{\numChoices}{4}          % A, B, C, D
 \newcommand{\startX}{0.8}
-\newcommand{\startY}{1.2}
+\newcommand{\startY}{2.45}
 \newcommand{\stepX}{0.48}
-\newcommand{\stepY}{0.36}
+\newcommand{\stepY}{0.32}
+\newcommand{\rowsPerCol}{25}         % questions per column before wrapping
+\newcommand{\colOffset}{2.8}         % horizontal distance between column starts (in)
 \newcommand{\bubbleRadius}{0.12}
 \newcommand{\markerSize}{0.15}
 \newcommand{\markerMargin}{0.4}
@@ -57,39 +59,42 @@
   % ---------------------------------------------------------
   % 2. Header block: name / LRN / subject / date
   % ---------------------------------------------------------
-  \node[anchor=north west, font=\bfseries\large] at (\markerMargin+0.3, \markerMargin+0.05)
+  \node[anchor=north west, font=\bfseries\large] at (\markerMargin+0.3, \markerMargin+0.15)
     {OMR Answer Sheet};
 
-  \node[anchor=north west, font=\small] at (\markerMargin+0.3, \markerMargin+0.35)
+  \node[anchor=north west, font=\small] at (\markerMargin+0.3, \markerMargin+0.45)
     {Name: \underline{\hspace{2.8in}}};
-  \node[anchor=north west, font=\small] at (\markerMargin+0.3, \markerMargin+0.6)
+  \node[anchor=north west, font=\small] at (\markerMargin+0.3, \markerMargin+0.7)
     {LRN: \underline{\hspace{1.6in}} \quad Section: \underline{\hspace{1.4in}}};
-  \node[anchor=north west, font=\small] at (\markerMargin+0.3, \markerMargin+0.85)
+  \node[anchor=north west, font=\small] at (\markerMargin+0.3, \markerMargin+0.95)
     {Subject: \underline{\hspace{1.8in}} \quad Date: \underline{\hspace{1.4in}}};
 
   % Rule under header
   \draw[black, line width=0.5pt]
-    (\markerMargin+0.3, \startY-0.15) -- (8.5-\markerMargin-0.3, \startY-0.15);
+    (\markerMargin+0.3, \markerMargin+1.35) -- (8.5-\markerMargin-0.3, \markerMargin+1.35);
 
   % ---------------------------------------------------------
   % 3. Instructions
   % ---------------------------------------------------------
   \node[anchor=north west, font=\scriptsize\itshape]
-    at (\markerMargin+0.3, \startY-0.35)
+    at (\markerMargin+0.3, \markerMargin+1.55)
     {Shade each bubble completely using a pencil or dark pen. Erase clean if changing an answer.};
 
   % ---------------------------------------------------------
   % 4. Bubble grid: numQuestions rows x numChoices columns
   % ---------------------------------------------------------
   \foreach \q in {1,...,\numQuestions} {
-    \pgfmathsetmacro{\rowY}{\startY + (\q-1)*\stepY}
+    \pgfmathtruncatemacro{\colIndex}{floor((\q-1)/\rowsPerCol)}
+    \pgfmathtruncatemacro{\rowIndex}{mod(\q-1,\rowsPerCol)}
+    \pgfmathsetmacro{\rowY}{\startY + \rowIndex*\stepY}
+    \pgfmathsetmacro{\colBaseX}{\startX + \colIndex*\colOffset}
 
     % Question number label, left of the bubble row
-    \node[anchor=east, font=\small] at (\startX-0.25, \rowY) {\q.};
+    \node[anchor=east, font=\small] at (\colBaseX-0.25, \rowY) {\q.};
 
     \foreach \c [count=\ci from 0] in \choiceLetters {
       \ifnum\ci<\numChoices
-        \pgfmathsetmacro{\colX}{\startX + \ci*\stepX}
+        \pgfmathsetmacro{\colX}{\colBaseX + \ci*\stepX}
         \draw[black, line width=0.8pt] (\colX, \rowY) circle (\bubbleRadius);
         \node[font=\scriptsize] at (\colX, \rowY) {\c};
       \fi

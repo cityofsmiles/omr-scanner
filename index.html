@@ -107,11 +107,22 @@
     <p class="sub" style="margin-top:10px;">Adjust values until the overlay circles sit exactly over each bubble on the warped sheet, then hit Detect Answers.</p>
   </div>
 
+  <div class="panel" style="min-width:260px;">
+    <strong style="font-size:0.9rem;">Answer key</strong>
+    <p class="sub" style="margin:6px 0;">Type it, or scan a filled-in key sheet and save the detection as the key.</p>
+    <textarea id="keyInput" rows="3" placeholder="e.g. ABCDAABCDABCDAABCDABCDAAB"
+      style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; border-radius:4px; padding:6px; font-size:0.85rem; font-family:monospace;"></textarea>
+    <button id="applyKeyBtn" class="secondary">Apply Typed Key</button>
+    <button id="saveDetectionAsKeyBtn" class="secondary" disabled>Save Last Detection as Key</button>
+    <p id="keyStatus" class="sub" style="margin-top:8px;">Key: not set</p>
+  </div>
+
 </div>
 
 <div class="panel" style="margin-top:16px; max-width:420px;" id="resultsPanel" hidden>
   <strong style="font-size:0.9rem;">Detected answers</strong>
-  <table id="resultsTable"><thead><tr><th>Q</th><th>Answer</th><th>Fill %</th></tr></thead><tbody></tbody></table>
+  <p id="scoreSummary" class="sub" style="margin:6px 0; font-size:0.95rem;"></p>
+  <table id="resultsTable"><thead><tr><th>Q</th><th>Answer</th><th>Fill %</th><th>Key</th></tr></thead><tbody></tbody></table>
 </div>
 
 <!-- Pinned OpenCV.js version, not the floating docs/4.x URL -->
@@ -129,6 +140,11 @@ const csvBtn = document.getElementById('csvBtn');
 const overlayBtn = document.getElementById('overlayBtn');
 const resultsPanel = document.getElementById('resultsPanel');
 const resultsTable = document.getElementById('resultsTable').querySelector('tbody');
+const scoreSummary = document.getElementById('scoreSummary');
+const keyInput = document.getElementById('keyInput');
+const applyKeyBtn = document.getElementById('applyKeyBtn');
+const saveDetectionAsKeyBtn = document.getElementById('saveDetectionAsKeyBtn');
+const keyStatus = document.getElementById('keyStatus');
 
 const TARGET_W = 850, TARGET_H = 1100; // canonical warped sheet size (px)
 
@@ -138,6 +154,7 @@ let warpedGray = null;    // persists after capture, deleted on retake
 let rafId = null;
 let cvReady = false;
 let lastResults = [];
+let answerKey = []; // array of correct letters, e.g. ['A','C','B',...]
 
 function onOpenCvReady() {
   cv['onRuntimeInitialized'] = () => {
@@ -291,7 +308,37 @@ retakeBtn.addEventListener('click', () => {
   startCamera();
 });
 
-// ---- Bubble grid overlay + detection ----
+// ---- Answer key ----
+
+function updateKeyStatus() {
+  keyStatus.innerText = answerKey.length
+    ? `Key: ${answerKey.length} item(s) set — ${answerKey.join('')}`
+    : 'Key: not set';
+}
+
+function parseKeyString(str) {
+  // Accept letters with or without separators (commas/spaces/newlines), case-insensitive
+  return str.toUpperCase().replace(/[^A-J]/g, '').split('');
+}
+
+applyKeyBtn.addEventListener('click', () => {
+  const parsed = parseKeyString(keyInput.value);
+  if (parsed.length === 0) {
+    keyStatus.innerText = 'Key: could not parse — use letters like ABCDA...';
+    return;
+  }
+  answerKey = parsed;
+  updateKeyStatus();
+});
+
+saveDetectionAsKeyBtn.addEventListener('click', () => {
+  if (!lastResults.length) return;
+  answerKey = lastResults.map(r => r.answer.replace('?', ''));
+  keyInput.value = answerKey.join('');
+  updateKeyStatus();
+});
+
+
 
 function getGridParams() {
   return {
@@ -344,6 +391,8 @@ detectBtn.addEventListener('click', () => {
   lastResults = [];
   resultsTable.innerHTML = '';
   const letters = 'ABCDEFGHIJ';
+  const keyMatches = answerKey.length === p.numQ;
+  let correctCount = 0;
 
   for (let q = 0; q < p.numQ; q++) {
     const pos = questionPos(q, p);
@@ -366,12 +415,33 @@ detectBtn.addEventListener('click', () => {
     }
 
     lastResults.push({ q: q + 1, answer, fill: maxFill.toFixed(1) });
+
+    let keyCell = '';
+    if (keyMatches) {
+      const correct = answerKey[q] === answer.replace('?', '');
+      if (correct) correctCount++;
+      keyCell = `<td class="${correct ? 'ok' : 'flag'}">${answerKey[q]} ${correct ? '✓' : '✗'}</td>`;
+    } else {
+      keyCell = '<td>—</td>';
+    }
+
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${q + 1}</td><td class="${flagged ? 'flag' : 'ok'}">${answer}</td><td>${maxFill.toFixed(1)}%</td>`;
+    tr.innerHTML = `<td>${q + 1}</td><td class="${flagged ? 'flag' : 'ok'}">${answer}</td><td>${maxFill.toFixed(1)}%</td>${keyCell}`;
     resultsTable.appendChild(tr);
   }
+
+  if (keyMatches) {
+    const pct = ((correctCount / p.numQ) * 100).toFixed(1);
+    scoreSummary.innerText = `Score: ${correctCount}/${p.numQ} (${pct}%)`;
+  } else if (answerKey.length) {
+    scoreSummary.innerText = `Key has ${answerKey.length} item(s), sheet has ${p.numQ} — lengths don't match, no score computed.`;
+  } else {
+    scoreSummary.innerText = '';
+  }
+
   resultsPanel.hidden = false;
   csvBtn.disabled = false;
+  saveDetectionAsKeyBtn.disabled = false;
 });
 
 // Fill % = darkness inside circular ROI, 0-100, using mean pixel intensity inverted
@@ -388,7 +458,26 @@ function sampleFill(grayMat, cx, cy, r) {
 }
 
 csvBtn.addEventListener('click', () => {
-  const rows = ['question,answer,fill_percent', ...lastResults.map(r => `${r.q},${r.answer},${r.fill}`)];
+  const keyMatches = answerKey.length === lastResults.length;
+  const header = keyMatches ? 'question,answer,fill_percent,key,correct' : 'question,answer,fill_percent';
+  const rows = [header];
+  let correctCount = 0;
+
+  lastResults.forEach(r => {
+    if (keyMatches) {
+      const correct = answerKey[r.q - 1] === r.answer.replace('?', '');
+      if (correct) correctCount++;
+      rows.push(`${r.q},${r.answer},${r.fill},${answerKey[r.q - 1]},${correct ? 'yes' : 'no'}`);
+    } else {
+      rows.push(`${r.q},${r.answer},${r.fill}`);
+    }
+  });
+
+  if (keyMatches) {
+    rows.push('');
+    rows.push(`score,${correctCount}/${lastResults.length},${((correctCount / lastResults.length) * 100).toFixed(1)}%`);
+  }
+
   const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
