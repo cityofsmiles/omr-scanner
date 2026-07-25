@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.22.0 (TeX Live 2025/Debian)  (format=lualatex 2026.6.23)  25 JUL 2026 16:15
+This is LuaHBTeX, Version 1.22.0 (TeX Live 2025/Debian)  (format=lualatex 2026.6.23)  25 JUL 2026 22:20
  system commands enabled.
 **answer-sheet.tex
 (./answer-sheet.tex
@@ -479,14 +479,11 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-
-LaTeX Font Warning: Font shape `TU/phv/b/n' undefined
-(Font)              using `TU/phv/m/n' instead on input line 79.
-
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <6> on input line 79.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 79.
+
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./answer-sheet.aux)
@@ -501,22 +498,21 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 )
 
 Here is how much of LuaTeX's memory you used:
- 12821 strings out of 476076
- 745154,1144653 words of node,token memory allocated
+ 12818 strings out of 476076
+ 745212,1144653 words of node,token memory allocated
  413 words of node memory still in use:
    3 hlist, 1 vlist, 1 rule, 2 glue, 3 kern, 1 glyph, 5 attribute, 48 glue_spec,
  5 attribute_list, 2 write nodes
-   avail lists: 1:2,2:69888,3:37783,4:3290,5:42,6:3,7:31864,8:2,9:14194,11:16
- 34943 multiletter control sequences out of 65536+600000
- 25 fonts using 1554391 bytes
+   avail lists: 1:1,2:69912,3:37783,4:3290,5:58,6:3,7:31888,8:2,9:14242,11:8
+ 34940 multiletter control sequences out of 65536+600000
+ 24 fonts using 1422383 bytes
  102i,6n,101p,411b,817s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/opentype/public/lm/lmroman5-regular.otf></usr/share/texm
-f/fonts/opentype/public/lm/lmroman6-regular.otf></usr/share/texmf/fonts/opentype
-/public/lm/lmroman10-regular.otf>
-Output written on answer-sheet.pdf (1 page, 81114 bytes).
+f/fonts/opentype/public/lm/lmroman6-regular.otf>
+Output written on answer-sheet.pdf (1 page, 78774 bytes).
 
-PDF statistics: 32 PDF objects out of 1000 (max. 8388607)
- 19 compressed objects within 1 object stream
+PDF statistics: 25 PDF objects out of 1000 (max. 8388607)
+ 15 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 131072)
  16 words of extra memory for PDF output out of 10000 (max. 100000000)
 
