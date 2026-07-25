@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -92,16 +92,16 @@
   <div class="panel" style="min-width:260px;">
     <strong style="font-size:0.9rem;">Bubble grid calibration</strong>
     <div class="grid2">
-      <div><label for="numQ">Questions</label><input type="number" id="numQ" value="10" min="1"></div>
-      <div><label for="numC">Choices (A,B,C...)</label><input type="number" id="numC" value="4" min="2" max="10"></div>
-      <div><label for="startX">Start X (px)</label><input type="number" id="startX" value="80" min="0"></div>
-      <div><label for="startY">Start Y (px)</label><input type="number" id="startY" value="120" min="0"></div>
-      <div><label for="stepY">Row spacing Y</label><input type="number" id="stepY" value="46" min="1"></div>
-      <div><label for="stepX">Choice spacing X</label><input type="number" id="stepX" value="48" min="1"></div>
-      <div><label for="radius">Bubble radius</label><input type="number" id="radius" value="12" min="1"></div>
-      <div><label for="thresh">Fill threshold %</label><input type="number" id="thresh" value="40" min="0" max="100"></div>
-      <div><label for="rowsPerCol">Rows per column</label><input type="number" id="rowsPerCol" value="10" min="1"></div>
-      <div><label for="colOffset">Column X offset (px)</label><input type="number" id="colOffset" value="0"></div>
+      <div><label>Questions</label><input type="number" id="numQ" value="10" min="1"></div>
+      <div><label>Choices (A,B,C...)</label><input type="number" id="numC" value="4" min="2" max="10"></div>
+      <div><label>Start X (px)</label><input type="number" id="startX" value="80"></div>
+      <div><label>Start Y (px)</label><input type="number" id="startY" value="120"></div>
+      <div><label>Row spacing Y</label><input type="number" id="stepY" value="46"></div>
+      <div><label>Choice spacing X</label><input type="number" id="stepX" value="48"></div>
+      <div><label>Bubble radius</label><input type="number" id="radius" value="12"></div>
+      <div><label>Fill threshold %</label><input type="number" id="thresh" value="40"></div>
+      <div><label>Rows per column</label><input type="number" id="rowsPerCol" value="10" min="1"></div>
+      <div><label>Column X offset (px)</label><input type="number" id="colOffset" value="0"></div>
     </div>
     <button id="overlayBtn" class="secondary">Redraw Grid Overlay</button>
     <p class="sub" style="margin-top:10px;">Adjust values until the overlay circles sit exactly over each bubble on the warped sheet, then hit Detect Answers.</p>
@@ -128,7 +128,7 @@
 <div class="panel" style="margin-top:16px; max-width:420px;">
   <strong style="font-size:0.9rem;">Batch (item analysis)</strong>
   <p class="sub" style="margin:6px 0;">Requires a matching answer key. Add each scanned student to the batch, then export one summary showing how many students got each item right.</p>
-  <label for="studentIdInput">Student ID / name (optional)</label>
+  <label>Student ID / name (optional)</label>
   <input type="text" id="studentIdInput" placeholder="e.g. 2024-0113 or leave blank"
     style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; border-radius:4px; padding:6px; font-size:0.85rem;">
   <button id="addToBatchBtn" disabled>Add Current Sheet to Batch</button>
@@ -137,7 +137,7 @@
   <p id="batchStatus" class="sub" style="margin-top:8px;">Batch: 0 students</p>
 </div>
 
-<!-- Pinned OpenCV.js version -->
+<!-- Pinned OpenCV.js version, not the floating docs/4.x URL -->
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.9.0-release.1/dist/opencv.js" onload="onOpenCvReady();"></script>
 
 <script>
@@ -335,6 +335,7 @@ function updateKeyStatus() {
 }
 
 function parseKeyString(str) {
+  // Accept letters with or without separators (commas/spaces/newlines), case-insensitive
   return str.toUpperCase().replace(/[^A-J]/g, '').split('');
 }
 
@@ -355,21 +356,26 @@ saveDetectionAsKeyBtn.addEventListener('click', () => {
   updateKeyStatus();
 });
 
+
+
 function getGridParams() {
   return {
-    numQ: parseInt(document.getElementById('numQ').value, 10) || 1,
-    numC: parseInt(document.getElementById('numC').value, 10) || 2,
-    startX: parseFloat(document.getElementById('startX').value) || 0,
-    startY: parseFloat(document.getElementById('startY').value) || 0,
-    stepY: parseFloat(document.getElementById('stepY').value) || 1,
-    stepX: parseFloat(document.getElementById('stepX').value) || 1,
-    radius: parseFloat(document.getElementById('radius').value) || 1,
-    thresh: parseFloat(document.getElementById('thresh').value) || 0,
-    rowsPerCol: parseInt(document.getElementById('rowsPerCol').value, 10) || 1,
-    colOffset: parseFloat(document.getElementById('colOffset').value) || 0
+    numQ: parseInt(document.getElementById('numQ').value, 10),
+    numC: parseInt(document.getElementById('numC').value, 10),
+    startX: parseFloat(document.getElementById('startX').value),
+    startY: parseFloat(document.getElementById('startY').value),
+    stepY: parseFloat(document.getElementById('stepY').value),
+    stepX: parseFloat(document.getElementById('stepX').value),
+    radius: parseFloat(document.getElementById('radius').value),
+    thresh: parseFloat(document.getElementById('thresh').value),
+    rowsPerCol: parseInt(document.getElementById('rowsPerCol').value, 10),
+    colOffset: parseFloat(document.getElementById('colOffset').value)
   };
 }
 
+// Given a 0-indexed question number, return {x, y} of its first-choice bubble center,
+// wrapping into a new column every rowsPerCol questions. With colOffset=0 this collapses
+// to the original single-column behavior.
 function questionPos(q, p) {
   const col = Math.floor(q / p.rowsPerCol);
   const row = q % p.rowsPerCol;
@@ -421,7 +427,7 @@ detectBtn.addEventListener('click', () => {
     if (maxFill < p.thresh) {
       answer = 'BLANK'; flagged = true;
     } else if (maxFill - runnerUp < 10) {
-      answer = letters[fills.indexOf(maxFill)] + '?'; flagged = true;
+      answer = letters[fills.indexOf(maxFill)] + '?'; flagged = true; // ambiguous, too close
     } else {
       answer = letters[fills.indexOf(maxFill)];
     }
@@ -457,6 +463,7 @@ detectBtn.addEventListener('click', () => {
   addToBatchBtn.disabled = !keyMatches;
 });
 
+// Fill % = darkness inside circular ROI, 0-100, using mean pixel intensity inverted
 function sampleFill(grayMat, cx, cy, r) {
   const x0 = Math.max(0, Math.round(cx - r));
   const y0 = Math.max(0, Math.round(cy - r));
@@ -464,9 +471,9 @@ function sampleFill(grayMat, cx, cy, r) {
   const h = Math.min(grayMat.rows - y0, Math.round(r * 2));
   if (w <= 0 || h <= 0) return 0;
   const roi = grayMat.roi(new cv.Rect(x0, y0, w, h));
-  const mean = cv.mean(roi)[0];
+  const mean = cv.mean(roi)[0]; // 0 (black) - 255 (white)
   roi.delete();
-  return 100 - (mean / 255) * 100;
+  return 100 - (mean / 255) * 100; // higher = darker = more filled
 }
 
 csvBtn.addEventListener('click', () => {
@@ -497,7 +504,7 @@ csvBtn.addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-// ---- Batch ----
+// ---- Batch (item analysis across many scanned sheets) ----
 
 function updateBatchStatus() {
   batchStatus.innerText = `Batch: ${batch.length} student${batch.length === 1 ? '' : 's'}`;
@@ -548,4 +555,3 @@ exportBatchBtn.addEventListener('click', () => {
 </script>
 </body>
 </html>
-
