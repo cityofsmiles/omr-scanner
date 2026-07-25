@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>OMR Scanner Prototype</title>
+<title>OMR Scanner</title>
 
 <!-- PWA: installable app metadata -->
 <link rel="manifest" href="manifest.json">
@@ -121,43 +121,33 @@
 
 <div class="header-row">
   <h2>OMR Scanner Prototype</h2>
-  <input type="text" id="sectionNameInput" class="section-input" placeholder="Section (e.g. 10-Gold)" value="Section A">
 </div>
 <p class="sub">Capture-on-demand · marker-based perspective correction · calibratable bubble grid</p>
 <div id="status">Loading OpenCV.js...</div>
 
 <div class="row">
 
-  <div class="panel">
-    <div class="container" id="cameraContainer">
-      <video id="webcam" playsinline></video>
-      <canvas id="liveCanvas"></canvas>
-      <div id="scoreBadge" class="score-badge" hidden></div>
-    </div>
-    <button id="autoScanBtn" disabled>Start Auto-Scan</button>
-    <p id="autoScanStatus">Auto-Scan off — calibrate manually first, then start Auto-Scan for hands-free batch scanning.</p>
-    <details style="margin-top:8px;">
-      <summary style="cursor:pointer; font-size:0.85rem; color:#8b949e;">Advanced (manual capture / troubleshooting)</summary>
-      <div style="margin-top:8px;">
-        <button id="captureBtn" disabled class="secondary">Manual Capture</button>
-        <button id="retakeBtn" class="secondary" disabled>Retake</button>
-      </div>
-    </details>
-  </div>
-
-  <div class="panel">
-    <div class="container">
-      <canvas id="warpedCanvas"></canvas>
-    </div>
-    <button id="detectBtn" disabled>Detect Answers</button>
-    <button id="csvBtn" class="secondary" disabled>Export CSV</button>
-  </div>
-
   <div class="panel" style="min-width:260px;">
-    <strong style="font-size:0.9rem;">Answer sheet</strong>
-    <div class="grid2">
-      <div><label for="numQ">Questions</label><input type="number" id="numQ" value="50" min="1"></div>
-    </div>
+    <strong style="font-size:0.9rem;">Setup</strong>
+    <p class="sub" style="margin:6px 0;">The 3 things you set per test.</p>
+
+    <label for="sectionNameInput">Section</label>
+    <input type="text" id="sectionNameInput" class="section-input" placeholder="Section (e.g. 10-Gold)" value="Section A"
+      style="width:100%; margin-bottom:10px;">
+
+    <label for="numQ">Questions</label>
+    <input type="number" id="numQ" value="50" min="1" style="width:100%; margin-bottom:10px;">
+
+    <label for="keyInput">Answer key</label>
+    <textarea id="keyInput" rows="3" placeholder="e.g. ABCDAABCDABCDAABCDABCDAAB..."
+      style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; border-radius:4px; padding:6px; font-size:0.85rem; font-family:monospace;"></textarea>
+    <button id="applyKeyBtn" class="secondary">Apply Typed Key</button>
+    <p id="keyStatus" class="sub" style="margin-top:8px;">Key: not set</p>
+
+    <details style="margin-top:10px;">
+      <summary style="cursor:pointer; font-size:0.85rem; color:#8b949e;">Advanced (scan a filled key sheet instead)</summary>
+      <button id="saveDetectionAsKeyBtn" class="secondary" style="margin-top:8px;" disabled>Save Last Detection as Key</button>
+    </details>
     <details style="margin-top:10px;">
       <summary style="cursor:pointer; font-size:0.85rem; color:#8b949e;">Advanced calibration (only if you change the template)</summary>
       <div class="grid2" style="margin-top:8px;">
@@ -176,17 +166,29 @@
     </details>
   </div>
 
-  <div class="panel" style="min-width:260px;">
-    <strong style="font-size:0.9rem;">Answer key</strong>
-    <p class="sub" style="margin:6px 0;">Type the correct answers, one letter per question.</p>
-    <textarea id="keyInput" rows="3" placeholder="e.g. ABCDAABCDABCDAABCDABCDAAB..."
-      style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; border-radius:4px; padding:6px; font-size:0.85rem; font-family:monospace;"></textarea>
-    <button id="applyKeyBtn" class="secondary">Apply Typed Key</button>
-    <p id="keyStatus" class="sub" style="margin-top:8px;">Key: not set</p>
-    <details style="margin-top:4px;">
-      <summary style="cursor:pointer; font-size:0.85rem; color:#8b949e;">Advanced (scan a filled key sheet instead)</summary>
-      <button id="saveDetectionAsKeyBtn" class="secondary" style="margin-top:8px;" disabled>Save Last Detection as Key</button>
+  <div class="panel">
+    <div class="container" id="cameraContainer">
+      <video id="webcam" playsinline></video>
+      <canvas id="liveCanvas"></canvas>
+      <div id="scoreBadge" class="score-badge" hidden></div>
+    </div>
+    <button id="autoScanBtn" disabled>Start Auto-Scan</button>
+    <p id="autoScanStatus">Auto-Scan off — start Auto-Scan for hands-free batch scanning.</p>
+    <details style="margin-top:8px;">
+      <summary style="cursor:pointer; font-size:0.85rem; color:#8b949e;">Advanced (manual capture / troubleshooting)</summary>
+      <div style="margin-top:8px;">
+        <button id="captureBtn" disabled class="secondary">Manual Capture</button>
+        <button id="retakeBtn" class="secondary" disabled>Retake</button>
+      </div>
     </details>
+  </div>
+
+  <div class="panel">
+    <div class="container">
+      <canvas id="warpedCanvas"></canvas>
+    </div>
+    <button id="detectBtn" disabled>Detect Answers</button>
+    <button id="csvBtn" class="secondary" disabled>Export CSV</button>
   </div>
 
 </div>
@@ -301,7 +303,7 @@ async function startCamera() {
     if (liveMat) liveMat.delete();
     liveMat = new cv.Mat(video.height, video.width, cv.CV_8UC4);
 
-    statusText.innerText = 'Live — calibrate manually first, then start Auto-Scan.';
+    statusText.innerText = 'Live — start Auto-Scan.';
     captureBtn.disabled = false;
     autoScanBtn.disabled = false;
     resumeLiveLoop();
