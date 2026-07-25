@@ -13,7 +13,23 @@
     background: #0d1117;
     color: #e6edf3;
   }
-  h2 { margin: 0 0 4px; font-size: 1.2rem; }
+  .header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+  h2 { margin: 0; font-size: 1.2rem; }
+  .section-input {
+    background: #161b22;
+    border: 1px solid #30363d;
+    color: #e6edf3;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.9rem;
+    width: 180px;
+  }
   p.sub { color: #8b949e; margin: 0 0 16px; font-size: 0.85rem; }
   #status {
     display: inline-block;
@@ -66,7 +82,10 @@
 </head>
 <body>
 
-<h2>OMR Scanner Prototype</h2>
+<div class="header-row">
+  <h2>OMR Scanner Prototype</h2>
+  <input type="text" id="sectionNameInput" class="section-input" placeholder="Section (e.g. 10-Gold)" value="Section A">
+</div>
 <p class="sub">Capture-on-demand · marker-based perspective correction · calibratable bubble grid</p>
 <div id="status">Loading OpenCV.js...</div>
 
@@ -158,6 +177,7 @@ const applyKeyBtn = document.getElementById('applyKeyBtn');
 const saveDetectionAsKeyBtn = document.getElementById('saveDetectionAsKeyBtn');
 const keyStatus = document.getElementById('keyStatus');
 const studentIdInput = document.getElementById('studentIdInput');
+const sectionNameInput = document.getElementById('sectionNameInput');
 const addToBatchBtn = document.getElementById('addToBatchBtn');
 const exportBatchBtn = document.getElementById('exportBatchBtn');
 const clearBatchBtn = document.getElementById('clearBatchBtn');
@@ -172,7 +192,7 @@ let rafId = null;
 let cvReady = false;
 let lastResults = [];
 let answerKey = []; // array of correct letters, e.g. ['A','C','B',...]
-let batch = []; // array of {id, answers: [...], correctFlags: [bool,...]}
+let batch = []; // array of {id, section, answers: [...], correctFlags: [bool,...]}
 
 function onOpenCvReady() {
   cv['onRuntimeInitialized'] = () => {
@@ -445,6 +465,9 @@ detectBtn.addEventListener('click', () => {
   if (keyMatches) {
     const pct = ((correctCount / p.numQ) * 100).toFixed(1);
     scoreSummary.innerText = `Score: ${correctCount}/${p.numQ} (${pct}%)`;
+    
+    // Automatically append scanned result into the batch section
+    addCurrentToBatchAuto();
   } else if (answerKey.length) {
     scoreSummary.innerText = `Key has ${answerKey.length} item(s), sheet has ${p.numQ} — lengths don't match, no score computed.`;
   } else {
@@ -454,7 +477,6 @@ detectBtn.addEventListener('click', () => {
   resultsPanel.hidden = false;
   csvBtn.disabled = false;
   saveDetectionAsKeyBtn.disabled = false;
-  addToBatchBtn.disabled = !keyMatches;
 });
 
 function sampleFill(grayMat, cx, cy, r) {
@@ -505,15 +527,18 @@ function updateBatchStatus() {
   clearBatchBtn.disabled = batch.length === 0;
 }
 
-addToBatchBtn.addEventListener('click', () => {
+function addCurrentToBatchAuto() {
   if (!lastResults.length || answerKey.length !== lastResults.length) return;
   const id = studentIdInput.value.trim() || `Student ${batch.length + 1}`;
+  const section = sectionNameInput.value.trim() || 'Default Section';
   const answers = lastResults.map(r => r.answer);
   const correctFlags = lastResults.map((r, i) => answerKey[i] === r.answer.replace('?', ''));
-  batch.push({ id, answers, correctFlags });
+  batch.push({ id, section, answers, correctFlags });
   studentIdInput.value = '';
   updateBatchStatus();
-});
+}
+
+addToBatchBtn.addEventListener('click', addCurrentToBatchAuto);
 
 clearBatchBtn.addEventListener('click', () => {
   if (!confirm(`Clear all ${batch.length} student(s) from the batch? This can't be undone.`)) return;
@@ -533,10 +558,10 @@ exportBatchBtn.addEventListener('click', () => {
   }
 
   rows.push('');
-  rows.push('student_id,score,percent');
+  rows.push('section,student_id,score,percent');
   batch.forEach(s => {
     const correct = s.correctFlags.filter(Boolean).length;
-    rows.push(`${s.id},${correct}/${numQ},${((correct / numQ) * 100).toFixed(1)}%`);
+    rows.push(`"${s.section}",${s.id},${correct}/${numQ},${((correct / numQ) * 100).toFixed(1)}%`);
   });
 
   const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
@@ -548,4 +573,3 @@ exportBatchBtn.addEventListener('click', () => {
 </script>
 </body>
 </html>
-
