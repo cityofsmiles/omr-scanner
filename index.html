@@ -140,17 +140,16 @@
 
 <div class="panel" style="margin-top:16px; max-width:420px;" id="resultsPanel" hidden>
   <strong style="font-size:0.9rem;">Detected answers</strong>
-  <p id="scoreSummary" class="sub" style="margin:6px 0; font-size:0.95rem;"></p>
+  <p id="scoreSummary" class="sub" style="margin:6px 0; font-size:0.95rem; font-weight:600;"></p>
   <table id="resultsTable"><thead><tr><th>Q</th><th>Answer</th><th>Fill %</th><th>Key</th></tr></thead><tbody></tbody></table>
 </div>
 
 <div class="panel" style="margin-top:16px; max-width:420px;">
   <strong style="font-size:0.9rem;">Batch (item analysis)</strong>
-  <p class="sub" style="margin:6px 0;">Requires a matching answer key. Add each scanned student to the batch, then export one summary showing how many students got each item right.</p>
-  <label for="studentIdInput">Student ID / name (optional)</label>
+  <p class="sub" style="margin:6px 0;">Requires a matching answer key. Scanned sheets are automatically added to the current section batch upon detection.</p>
+  <label for="studentIdInput">Student ID / name (optional for next scan)</label>
   <input type="text" id="studentIdInput" placeholder="e.g. 2024-0113 or leave blank"
-    style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; border-radius:4px; padding:6px; font-size:0.85rem;">
-  <button id="addToBatchBtn" disabled>Add Current Sheet to Batch</button>
+    style="width:100%; background:#0d1117; border:1px solid #30363d; color:#e6edf3; border-radius:4px; padding:6px; font-size:0.85rem; margin-bottom: 8px;">
   <button id="exportBatchBtn" class="secondary" disabled>Export Batch Summary CSV</button>
   <button id="clearBatchBtn" class="secondary" disabled>Clear Batch</button>
   <p id="batchStatus" class="sub" style="margin-top:8px;">Batch: 0 students</p>
@@ -178,7 +177,6 @@ const saveDetectionAsKeyBtn = document.getElementById('saveDetectionAsKeyBtn');
 const keyStatus = document.getElementById('keyStatus');
 const studentIdInput = document.getElementById('studentIdInput');
 const sectionNameInput = document.getElementById('sectionNameInput');
-const addToBatchBtn = document.getElementById('addToBatchBtn');
 const exportBatchBtn = document.getElementById('exportBatchBtn');
 const clearBatchBtn = document.getElementById('clearBatchBtn');
 const batchStatus = document.getElementById('batchStatus');
@@ -464,10 +462,11 @@ detectBtn.addEventListener('click', () => {
 
   if (keyMatches) {
     const pct = ((correctCount / p.numQ) * 100).toFixed(1);
-    scoreSummary.innerText = `Score: ${correctCount}/${p.numQ} (${pct}%)`;
     
-    // Automatically append scanned result into the batch section
+    // Auto-save to section batch like ZipGrade
     addCurrentToBatchAuto();
+    
+    scoreSummary.innerHTML = `<span class="ok">Score: ${correctCount}/${p.numQ} (${pct}%) — Saved to Batch!</span>`;
   } else if (answerKey.length) {
     scoreSummary.innerText = `Key has ${answerKey.length} item(s), sheet has ${p.numQ} — lengths don't match, no score computed.`;
   } else {
@@ -537,8 +536,6 @@ function addCurrentToBatchAuto() {
   studentIdInput.value = '';
   updateBatchStatus();
 }
-
-addToBatchBtn.addEventListener('click', addCurrentToBatchAuto);
 
 clearBatchBtn.addEventListener('click', () => {
   if (!confirm(`Clear all ${batch.length} student(s) from the batch? This can't be undone.`)) return;
