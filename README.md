@@ -23,9 +23,10 @@ All image processing (marker detection, perspective warp, bubble-fill sampling) 
 
 1. **Print the answer sheet** — download the [PDF](https://cityofsmiles.github.io/omr-scanner/answer-sheet/answer-sheet.pdf), print on A4, and cut along the dashed guides into 4 individual mini answer sheets.
 
-2. **Open the app** on a phone — [cityofsmiles.github.io/omr-scanner](https://cityofsmiles.github.io/omr-scanner/). Optionally install it as a PWA (see below) for offline use and a home-screen icon.
+2. **Open the app** on a phone — [cityofsmiles.github.io/omr-scanner](https://cityofsmiles.github.io/omr-scanner/). Optionally install it as a PWA (see below) for offline use and a home-screen icon. Give the necessary permission to use the device camera.
+![Screenshot](images/allow.jpg)
 
-3. **Set the section name** at the top — this becomes the exported CSV's filename.
+3. **Set the section name**  — this becomes the exported CSV's filename.
 ![Screenshot](images/setup.jpg)
 
 4. **Set the number of questions** to match the test.
