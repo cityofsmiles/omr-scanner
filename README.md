@@ -3,6 +3,7 @@
 A camera-based OMR (optical mark recognition) answer sheet scanner that runs entirely in the browser — no server, no backend, no data ever leaves the device. Built for teachers who need fast, offline-capable multiple-choice grading without paying for a commercial app or scanner hardware.
 
 **Live app:** https://cityofsmiles.github.io/omr-scanner/
+
 **Answer sheet template (PDF):** https://cityofsmiles.github.io/omr-scanner/answer-sheet/answer-sheet.pdf
 
 ## Features
@@ -21,12 +22,20 @@ All image processing (marker detection, perspective warp, bubble-fill sampling) 
 ## Usage
 
 1. **Print the answer sheet** — download the [PDF](https://cityofsmiles.github.io/omr-scanner/answer-sheet/answer-sheet.pdf), print on A4, and cut along the dashed guides into 4 individual mini answer sheets.
+
 2. **Open the app** on a phone — [cityofsmiles.github.io/omr-scanner](https://cityofsmiles.github.io/omr-scanner/). Optionally install it as a PWA (see below) for offline use and a home-screen icon.
+
 3. **Set the section name** at the top — this becomes the exported CSV's filename.
+![Screenshot](images/setup.png)
+
 4. **Set the number of questions** to match the test.
 5. **Set the answer key** — type it into the Answer Key box (e.g. `ABCDAABCD...`), or expand "Advanced" to scan a filled-in key sheet instead.
+
 6. **Start Auto-Scan** and hold each student's sheet up to the camera. It captures automatically once held steady, shows the score, and adds it to the batch.
+![Screenshot](images/start.png)
+
 7. **Export Batch Summary CSV** when done — you'll get per-item correct-counts (item analysis) and a per-student score list in one file, named after your section.
+![Screenshot](images/export.png)
 
 ### Installing as a PWA
 
