@@ -26,16 +26,17 @@ All image processing (marker detection, perspective warp, bubble-fill sampling) 
 2. **Open the app** on a phone — [cityofsmiles.github.io/omr-scanner](https://cityofsmiles.github.io/omr-scanner/). Optionally install it as a PWA (see below) for offline use and a home-screen icon.
 
 3. **Set the section name** at the top — this becomes the exported CSV's filename.
-![Screenshot](images/setup.png)
+![Screenshot](images/setup.jpg)
 
 4. **Set the number of questions** to match the test.
-5. **Set the answer key** — type it into the Answer Key box (e.g. `ABCDAABCD...`), or expand "Advanced" to scan a filled-in key sheet instead.
+
+5. **Set the answer key** — type it into the Answer Key box (e.g. `ABCDAABCD...`) and tap the Apply Typed Key button. You may also expand "Advanced" to scan a filled-in key sheet instead.
 
 6. **Start Auto-Scan** and hold each student's sheet up to the camera. It captures automatically once held steady, shows the score, and adds it to the batch.
-![Screenshot](images/start.png)
+![Screenshot](images/start.jpg)
 
 7. **Export Batch Summary CSV** when done — you'll get per-item correct-counts (item analysis) and a per-student score list in one file, named after your section.
-![Screenshot](images/export.png)
+![Screenshot](images/export.jpg)
 
 ### Installing as a PWA
 
